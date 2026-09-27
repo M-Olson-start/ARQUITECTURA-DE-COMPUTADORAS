@@ -1,0 +1,76 @@
+
+// =========================================================================
+// ESCENARIO VII: BARRERA DE ESTACIONAMIENTO CON ULTRASONIDO Y SERVOMOTOR
+// =========================================================================
+
+#include <Servo.h> // Librería para el control del servomotor
+
+// Definición de pines
+const int pinTrig = 11;     // Pin Trigger del sensor HC-SR04
+const int pinEcho = 10;    // Pin Echo del sensor HC-SR04
+const int pinServo = 6;    // Pin PWM de control para el Servomotor
+const int pinLED = 13;     // LED de señal luminosa de barrera levantada
+
+// Objeto para controlar el servomotor
+Servo barreraServo;
+
+// Umbral de distancia para detección de vehículo (en centímetros)
+const int UMBRAL_DISTANCIA_CM = 20;
+
+void setup() {
+  // Inicialización de la comunicación serial a 9600 baudios
+  Serial.begin(9600);
+  Serial.println("==========================================");
+  Serial.println("  SISTEMA DE BARRERA AUTOMATICA INICIADO  ");
+  Serial.println("==========================================");
+
+  // Configuración de pines del sensor ultrasónico y LED
+  pinMode(pinTrig, OUTPUT);
+  pinMode(pinEcho, INPUT);
+  pinMode(pinLED, OUTPUT);
+
+  // Vinculación e inicialización del servomotor en posición cerrada (0°)
+  barreraServo.attach(pinServo);
+  barreraServo.write(0); // Barrera abajo
+  digitalWrite(pinLED, LOW); // Luz de alerta apagada
+}
+
+void loop() {
+  // --- LECTURA DEL SENSOR ULTRASÓNICO HC-SR04 ---
+  // Se envía un pulso limpio en HIGH de 10 microsegundos por el pin Trigger
+  digitalWrite(pinTrig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(pinTrig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(pinTrig, LOW);
+
+  // Mide la duración del pulso reflejado devuelto en el pin Echo (en microsegundos)
+  long duracion = pulseIn(pinEcho, HIGH);
+
+  // Cálculo de distancia en cm:
+  // Distancia = (duración * velocidad del sonido 0.0343 cm/us) / 2
+  float distanciaCm = (duracion * 0.0343) / 2.0;
+
+  // Filtro para lecturas erróneas o fuera de rango
+  if (duracion == 0 || distanciaCm > 400) {
+    Serial.println("[INFO] Fuera de rango o sin objeto detectado.");
+  } else {
+    Serial.print("Distancia medida: ");
+    Serial.print(distanciaCm, 1);
+    Serial.println(" cm");
+  }
+
+  // --- CONTROL AUTOMÁTICO DE LA BARRERA Y SEÑAL LUMINOSA ---
+  if (distanciaCm > 0 && distanciaCm <= UMBRAL_DISTANCIA_CM) {
+    // Vehículo detectado: Levanta la barrera y enciende la luz indicadora
+    Serial.println(" [VEHICULO DETECTADO] -> Levantando barrera y encendiendo LED...");
+    barreraServo.write(90);    // Posición levantada (90°)
+    digitalWrite(pinLED, HIGH); // LED encendido
+  } else {
+    // Sin vehículo: Mantiene la barrera abajo y la luz apagada
+    barreraServo.write(0);     // Posición cerrada (0°)
+    digitalWrite(pinLED, LOW);  // LED apagado
+  }
+
+  delay(200); // Pausa corta para estabilizar las mediciones
+}

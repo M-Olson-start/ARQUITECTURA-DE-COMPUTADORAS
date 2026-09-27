@@ -1,0 +1,89 @@
+
+// =========================================================================
+// ESCENARIO VI: VISUALIZACIÓN EN PANTALLA LCD (16x2) CON DHT22
+// =========================================================================
+
+#include "DHT.h"           // Librería requerida para el sensor DHT22
+#include <LiquidCrystal.h> // Librería requerida para la pantalla LCD
+
+// Configuración del sensor DHT22
+#define DHTPIN 11           // Pin digital para la línea de datos del DHT22
+#define DHTTYPE DHT22
+DHT dht(DHTPIN, DHTTYPE);
+
+// Inicialización de la pantalla LCD (RS, E, DB4, DB5, DB6, DB7)
+LiquidCrystal lcd( 8,6,5,4,3,2);
+
+// Configuración de alertas (integrado con Escenario V)
+const int PIN_LED = 12;
+const int PIN_BUZZER = 13;
+const float UMBRAL_TEMP = 25.0; // Umbral de alerta de temperatura (> 25 °C)
+const float UMBRAL_HUM = 70.0;  // Umbral de alerta de humedad (> 70%)
+
+void setup() {
+  Serial.begin(9600); // Inicialización del Monitor Serie
+  
+  // Configuración de la pantalla LCD (16 columnas, 2 filas)
+  lcd.begin(16, 2);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("  Iniciando...  ");
+
+  // Configuración de pines de alerta
+  pinMode(PIN_LED, OUTPUT);
+  pinMode(PIN_BUZZER, OUTPUT);
+  digitalWrite(PIN_LED, LOW);
+  noTone(PIN_BUZZER);
+
+  // Inicialización del sensor DHT22
+  dht.begin();
+  delay(1000);
+  lcd.clear();
+}
+
+void loop() {
+  // Pausa de 2 segundos recomendada entre lecturas del DHT22
+  delay(2000);
+
+  // Lectura de los valores del sensor
+  float humedad = dht.readHumidity();
+  float temperatura = dht.readTemperature();
+
+  // Control de errores de lectura
+  if (isnan(humedad) || isnan(temperatura)) {
+    lcd.setCursor(0, 0);
+    lcd.print("Error en DHT22  ");
+    Serial.println("[ERROR] No se pudo obtener lectura del sensor DHT22.");
+    return;
+  }
+
+  // --- MUESTRA EN PANTALLA LCD ---
+  // Fila 0: Muestra la Temperatura
+  lcd.setCursor(0, 0);
+  lcd.print("Temp: ");
+  lcd.print(temperatura, 1);
+  lcd.print((char)223); // Imprime el símbolo de grados '°'
+  lcd.print("C   ");
+
+  // Fila 1: Muestra la Humedad
+  lcd.setCursor(0, 1);
+  lcd.print("Hum:  ");
+  lcd.print(humedad, 1);
+  lcd.print(" %   ");
+
+  // Muestra de datos en el Monitor Serie para depuración
+  Serial.print("Temperatura: ");
+  Serial.print(temperatura);
+  Serial.print(" °C | Humedad: ");
+  Serial.print(humedad);
+  Serial.println(" %");
+
+  // Disparo de alertas si se superan los umbrales
+  if (temperatura > UMBRAL_TEMP || humedad > UMBRAL_HUM) {
+    digitalWrite(PIN_LED, HIGH);
+    tone(PIN_BUZZER, 800);
+  } else {
+    digitalWrite(PIN_LED, LOW);
+    noTone(PIN_BUZZER);
+  }
+}
