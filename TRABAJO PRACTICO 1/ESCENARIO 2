@@ -1,0 +1,98 @@
+// ============================================================
+// ESCENARIO II - Semaforos con giro en intersecciones
+// ============================================================
+
+int Rojo1 = 13;      // todos los rojos semaforo 1
+int Rojo2 = 10;      // rojos del segundo semaforo
+int Verde1 = 11;     // todos los verdes semaforo 1
+int Verde2 = 8;      // todos verdes semaforo 2
+int Amarillo1 = 12;  // semaforo 1
+int Amarillo2 = 9;   // semaforo 2
+// semaforo 3 y semaforo 4
+int Amarillo34 = 6;  // semaforo 3
+int Rojo34 = 7;      // rojos del segundo semaforo
+int Verde34 = 5;     // todos los verdes semaforo 3
+
+const unsigned long TIEMPO_VERDE = 3000;          // = TIEMPO_CRUCE_PEATONAL del Escenario III
+const unsigned long TIEMPO_AMARILLO = 1000;        // = TIEMPO_AMARILLO_TRANSICION / PREAVISO del Escenario III
+const unsigned long TIEMPO_ROJO_DESPEJE = 1000;    // = TIEMPO_ROJO_DESPEJE del Escenario III
+
+void setup()
+{
+  pinMode(Rojo1, OUTPUT);
+  pinMode(Amarillo1, OUTPUT);
+  pinMode(Verde1, OUTPUT);
+  pinMode(Rojo2, OUTPUT);
+  pinMode(Amarillo2, OUTPUT);
+  pinMode(Verde2, OUTPUT);
+  pinMode(Amarillo34, OUTPUT);
+  pinMode(Rojo34, OUTPUT);
+  pinMode(Verde34, OUTPUT);
+}
+
+void loop()
+{
+  // linea 1: verde semaforo 1
+  digitalWrite(Amarillo1, LOW);
+  digitalWrite(Rojo2, HIGH);
+  digitalWrite(Verde1, HIGH);
+  digitalWrite(Rojo34, HIGH);
+  delay(TIEMPO_VERDE);
+
+  // linea 2: amarillo semaforo 1
+  digitalWrite(Verde1, LOW);
+  digitalWrite(Amarillo1, HIGH);
+  delay(TIEMPO_AMARILLO);
+
+  // linea 3: todos en rojo (despeje de interseccion)
+  digitalWrite(Amarillo1, LOW);
+  digitalWrite(Rojo1, HIGH);
+  delay(TIEMPO_ROJO_DESPEJE);
+
+  // linea 4: amarillo del semaforo 2 (preaviso antes del verde)
+  digitalWrite(Rojo2, LOW);
+  digitalWrite(Amarillo2, HIGH);
+  delay(TIEMPO_AMARILLO);
+
+  // linea 5: verde semaforo 2
+  digitalWrite(Amarillo2, LOW);
+  digitalWrite(Verde2, HIGH);
+  delay(TIEMPO_VERDE);
+
+  // linea 6: amarillo semaforo 2 (fin de su verde)
+  digitalWrite(Verde2, LOW);
+  digitalWrite(Amarillo2, HIGH);
+  delay(TIEMPO_AMARILLO);
+
+  // linea 7: todos en rojo (despeje de interseccion)
+  digitalWrite(Amarillo2, LOW);
+  digitalWrite(Rojo2, HIGH);
+  digitalWrite(Rojo34,HIGH);
+  delay(TIEMPO_ROJO_DESPEJE);
+
+  // linea 8: amarillo semaforo 3 (preaviso antes del verde)
+  digitalWrite(Amarillo2, LOW);
+  digitalWrite(Rojo34, LOW);
+  digitalWrite(Amarillo34, HIGH);
+  delay(TIEMPO_AMARILLO);
+
+  // linea 9: verde semaforo 3
+  digitalWrite(Amarillo34, LOW);
+  digitalWrite(Verde34, HIGH);
+  delay(TIEMPO_VERDE);
+
+  // linea 10: amarillo semaforo 3 (fin de su verde)
+  digitalWrite(Verde34, LOW);
+  digitalWrite(Amarillo34, HIGH);
+  delay(TIEMPO_AMARILLO);
+
+  // linea 11: todos en rojo (despeje de interseccion)
+  digitalWrite(Amarillo34, LOW);
+  digitalWrite(Rojo34, HIGH);
+  delay(TIEMPO_ROJO_DESPEJE);
+
+  // linea 12: amarillo semaforo 1 (preaviso, cierra el ciclo)  
+  digitalWrite(Rojo1, LOW);
+  digitalWrite(Amarillo1, HIGH);
+  delay(TIEMPO_AMARILLO);
+}
