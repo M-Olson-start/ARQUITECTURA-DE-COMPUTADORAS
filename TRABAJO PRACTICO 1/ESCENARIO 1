@@ -1,0 +1,59 @@
+int Rojo1=13;
+int Rojo2=7;
+int Verde1=11;
+int Verde2=2;
+int Amarillo1=12;
+int Amarillo2=4;
+
+
+
+
+void setup()
+{
+  pinMode(Rojo1, OUTPUT);
+  pinMode(Amarillo1, OUTPUT);
+  pinMode(Verde1, OUTPUT);
+  pinMode(Rojo2, OUTPUT);
+  pinMode(Amarillo2, OUTPUT);
+  pinMode(Verde2, OUTPUT);
+
+
+}
+
+void loop()
+{
+ //LINEA 1 VERDE SEMAFORO 1
+  digitalWrite(Amarillo1,LOW);
+  digitalWrite(Rojo2, HIGH);
+  digitalWrite(Verde1, HIGH);
+  delay(2000); 
+ //LINEA 2 AMARILLO SEMAFORO 1
+  digitalWrite(Verde1, LOW);
+  digitalWrite(Amarillo1, HIGH);
+  delay(1000); 
+ //LINEA 3 TODOS ROJOS
+  digitalWrite(Amarillo1, LOW);
+  digitalWrite(Rojo1, HIGH);
+  delay(1000); 
+ //LINEA 4 AMARILLO EL SEMAFORO 2 
+ digitalWrite(Rojo2, LOW);
+ digitalWrite(Amarillo2, HIGH);
+ delay(1000); 
+ //LINEA 5 VERDE EL SEMAFORO 2  
+ digitalWrite(Amarillo2, LOW);
+ digitalWrite(Verde2, HIGH);
+delay(2000); 
+ //LINEA 6 AMARILLO EL SEMAFORO 2 
+digitalWrite(Verde2, LOW);
+digitalWrite(Amarillo2,HIGH);
+delay(1000); 
+//LINEA 7 TODOS ROJOS
+  digitalWrite(Amarillo2, LOW);
+  digitalWrite(Rojo2, HIGH);
+  delay(1000);  
+ //LINEA 8 AMARILLO EL SEMAFORO 1 
+digitalWrite(Rojo1, LOW);
+digitalWrite(Amarillo1,HIGH);
+delay(1000);
+
+}
