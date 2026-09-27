@@ -1,0 +1,65 @@
+// =========================================================================
+// ESCENARIO IV: ALARMA VECINAL CON SEÑAL LUMINOSA Y SONORA
+// =========================================================================
+
+// Definición de pines digitales
+const int pinBoton = 2;    // Botón de activación/desactivación de la alarma
+const int pinLED = 3;     // LED de señal luminosa de alerta
+const int pinBuzzer = 8;   // Buzzer piezoeléctrico para la señal sonora
+
+// Variables para el control de estado de la alarma
+bool alarmaActivada = false;
+bool estadoBotonAnterior = HIGH;
+
+void setup() {
+  // Inicialización del puerto serie para depuración a 9600 baudios
+  Serial.begin(9600);
+  Serial.println("==========================================");
+  Serial.println("    SISTEMA DE ALARMA VECINAL INICIADO    ");
+  Serial.println("==========================================");
+
+  // Configuración de pines de entrada y salida
+  pinMode(pinBoton, INPUT_PULLUP); // Resistencia interna de pull-up (LOW al presionar)
+  pinMode(pinLED, OUTPUT);
+  pinMode(pinBuzzer, OUTPUT);
+
+  // Estado inicial: Alarma apagada
+  digitalWrite(pinLED, LOW);
+  noTone(pinBuzzer);
+}
+
+void loop() {
+  // Lectura del estado del botón
+  bool lecturaBoton = digitalRead(pinBoton);
+
+  // Detección de flanco (transición de HIGH a LOW cuando el vecino presiona el botón)
+  if (lecturaBoton == LOW && estadoBotonAnterior == HIGH) {
+    alarmaActivada = !alarmaActivada; // Conmuta el estado de la alarma (ON / OFF)
+    delay(200);                       // Antirrebote por software
+
+    if (alarmaActivada) {
+      
+      Serial.println("[ALERTA] ¡Alarma vecinal ACTIVADA por un vecino!");
+    } else {
+      Serial.println("[INFO] Alarma vecinal DESACTIVADA.");
+      digitalWrite(pinLED, LOW);
+      noTone(pinBuzzer); // Apaga el sonido inmediatamente
+    }
+  }
+
+  // Actualización del estado anterior del botón
+  estadoBotonAnterior = lecturaBoton;
+
+  // Secuencia de alerta cuando la alarma se encuentra activa
+  if (alarmaActivada) {
+    // Tono alto y destello LED ENCENDIDO
+    digitalWrite(pinLED, HIGH);
+    tone(pinBuzzer, 800); // Frecuencia de 800 Hz
+    delay(150);
+
+    // Tono bajo y destello LED APAGADO
+    digitalWrite(pinLED, LOW);
+    tone(pinBuzzer, 600); // Frecuencia de 600 Hz
+    delay(150);
+  }
+}
