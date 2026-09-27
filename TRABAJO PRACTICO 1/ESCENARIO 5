@@ -41,7 +41,7 @@ void setup() {
 
 void loop() {
   // El tiempo entre lecturas debe ser de al menos 2 segundos para el DHT22
-  delay(2000);
+  delay(1700);
 
   // Lectura de valores analógicos/digitales procesados por la librería
   float humedad = dht.readHumidity();
@@ -63,20 +63,22 @@ void loop() {
   // Evaluación de condiciones de alerta
   bool alertaTemperatura = (temperatura > UMBRAL_TEMP);
   bool alertaHumedad = (humedad > UMBRAL_HUM);
-
-  if (alertaTemperatura || alertaHumedad) {
-    // Enciende el LED indicador ante cualquiera de las dos alertas
-    digitalWrite(PIN_LED, HIGH);
-
-    if (alertaTemperatura && alertaHumedad) {
-      Serial.println(" [ALERTA MAXIMA] ¡Se superaron los 25 °C Y el limite de humedad!");
-      tone(PIN_BUZZER, 1000); // Tono de alta frecuencia (1000 Hz)
-    } else if (alertaTemperatura) {
+  if (alertaHumedad || alertaTemperatura) {
+    if (alertaTemperatura) {
       Serial.println(" [ALERTA TEMPERATURA] ¡Temperatura superior a 25 °C!");
-      tone(PIN_BUZZER, 800);  // Tono de alerta de temperatura (800 Hz)
-    } else {
+      
+      for (int frecuencia = 500; frecuencia <= 1000; frecuencia += 10) {
+        tone(PIN_BUZZER, frecuencia);
+
+        // Mapeamos la frecuencia al brillo del LED (de 0 a 255)
+        int brillo = map(frecuencia, 500, 1000, 0, 255);
+        analogWrite(PIN_LED, brillo); // Cambia la intensidad de la luz
+        delay(5);
+      }
+    }
+    if (alertaHumedad) {
       Serial.println(" [ALERTA HUMEDAD] ¡Humedad superior al umbral establecido!");
-      tone(PIN_BUZZER, 600);  // Tono de alerta de humedad (600 Hz)
+
     }
   } else {
     // Si los valores son normales, se desactivan las alertas
