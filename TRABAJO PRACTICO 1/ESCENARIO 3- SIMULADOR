@@ -1,0 +1,202 @@
+// ============================================================
+// ESCENARIO III - Semaforo vehicular con solicitud de cruce
+// peatonal + deteccion de modo nocturno
+// >>> VERSION DE PRUEBA: RTC deshabilitado, solo SWITCH <
+// ============================================================
+#include <Wire.h>
+#include <RTClib.h>
+
+RTC_DS3231 rtc;
+
+// Pines de componentes
+const int buttonPin = 2;          // Boton peatonal
+const int pinModoNocturno = 3;    // Switch de OVERRIDE MANUAL (fuerza modo nocturno)
+
+// Semaforo Vehicular
+const int Rojo1 = 13;
+const int Amarillo1 = 12;
+const int Verde1 = 11;
+
+// Semaforo Peatonal
+const int RojoPeaton = 10;
+const int VerdePeaton = 9;
+
+// Tiempos (milisegundos)
+const unsigned long TIEMPO_AMARILLO_SEGURIDAD = 2000;
+const unsigned long TIEMPO_AMARILLO_TRANSICION = 1500;
+const unsigned long TIEMPO_AMARILLO_PREAVISO = 1500;
+const unsigned long TIEMPO_CRUCE_PEATONAL = 4000;
+const unsigned long TIEMPO_ROJO_DESPEJE = 2000;
+
+// --- Configuracion del horario nocturno (DESACTIVADO EN ESTA PRUEBA) ---
+// const int HORA_INICIO_NOCTURNO = 20; // 20:00 hs
+// const int HORA_FIN_NOCTURNO = 6;     // 06:00 hs
+
+int ultimoEstadoInformado = -1; // 0: Diurno, 1: Nocturno
+int ultimoEstadoSwitch = -1;    // debug del switch
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("==========================================");
+  Serial.println("  SISTEMA DE CONTROL DE SEMAFORO INICIADO ");
+  Serial.println("  >>> MODO PRUEBA: SOLO SWITCH, SIN RTC <<<");
+  Serial.println("==========================================");
+
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(pinModoNocturno, INPUT_PULLUP);
+
+  pinMode(Rojo1, OUTPUT);
+  pinMode(Amarillo1, OUTPUT);
+  pinMode(Verde1, OUTPUT);
+  pinMode(RojoPeaton, OUTPUT);
+  pinMode(VerdePeaton, OUTPUT);
+
+  // --- Inicializacion del RTC (se deja conectado pero no se usa para decidir) ---
+  if (!rtc.begin()) {
+    Serial.println("[ERROR] No se encontro el modulo RTC. Verificar conexion I2C (SDA/SCL).");
+    while (1) delay(10);
+  }
+
+  if (rtc.lostPower()) {
+    Serial.println("[AVISO] El RTC no tenia hora guardada. Se ajusta con la hora de compilacion.");
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+
+  Serial.print("[DEBUG] Estado inicial del switch (pin 3): ");
+  Serial.println(digitalRead(pinModoNocturno));
+
+  apagarLuces();
+}
+
+void loop() {
+  // --- LOGICA DEL RTC COMENTADA PARA ESTA PRUEBA ---
+  // DateTime ahora = rtc.now();
+  // int hora = ahora.hour();
+  //
+  // bool esNocturnoPorReloj;
+  // if (HORA_INICIO_NOCTURNO > HORA_FIN_NOCTURNO) {
+  //   esNocturnoPorReloj = (hora >= HORA_INICIO_NOCTURNO || hora < HORA_FIN_NOCTURNO);
+  // } else {
+  //   esNocturnoPorReloj = (hora >= HORA_INICIO_NOCTURNO && hora < HORA_FIN_NOCTURNO);
+  // }
+  bool esNocturnoPorReloj = false; // <-- forzado a false: el reloj no decide nada en esta prueba
+
+  bool overrideManual = (digitalRead(pinModoNocturno) == LOW);
+  bool esNocturno = esNocturnoPorReloj || overrideManual; // ahora depende 100% del switch
+
+  // --- DEBUG del switch (avisa solo cuando cambia) ---
+  int estadoSwitchActual = digitalRead(pinModoNocturno);
+  if (estadoSwitchActual != ultimoEstadoSwitch) {
+    Serial.print("[DEBUG] Switch cambio a: ");
+    Serial.println(estadoSwitchActual == LOW ? "LOW (activado)" : "HIGH (suelto)");
+    ultimoEstadoSwitch = estadoSwitchActual;
+  }
+
+  if (esNocturno) {
+    if (ultimoEstadoInformado != 1) {
+      Serial.println("\n[ESTADO] -> Modo Nocturno Activado (forzado por switch, RTC ignorado).");
+      ultimoEstadoInformado = 1;
+    }
+
+    // MODO NOCTURNO: Amarillo intermitente vehicular / Rojo peatonal
+    digitalWrite(Verde1, LOW);
+    digitalWrite(Rojo1, LOW);
+    digitalWrite(VerdePeaton, LOW);
+    digitalWrite(RojoPeaton, HIGH);
+
+    bool peticionBoton = false;
+
+    digitalWrite(Amarillo1, HIGH);
+    for (int i = 0; i < 10; i++) {
+      if (digitalRead(buttonPin) == LOW) peticionBoton = true;
+      delay(50);
+    }
+
+    digitalWrite(Amarillo1, LOW);
+    for (int i = 0; i < 10; i++) {
+      if (digitalRead(buttonPin) == LOW) peticionBoton = true;
+      delay(50);
+    }
+
+    if (peticionBoton) {
+      Serial.println(" [EVENTO] Pulsador presionado en MODO NOCTURNO.");
+
+      Serial.println(" [TRANSICION] Cambio a Amarillo Fijo de Seguridad (2 seg)...");
+      digitalWrite(Amarillo1, HIGH);
+      delay(TIEMPO_AMARILLO_SEGURIDAD);
+      digitalWrite(Amarillo1, LOW);
+
+      ejecutarCrucePeatonal();
+
+      Serial.println(" [TRANSICION] Retomando Modo Nocturno Intermitente.");
+    }
+
+  } else {
+    if (ultimoEstadoInformado != 0) {
+      Serial.println("\n[ESTADO] -> Modo Diurno Activado (switch suelto, RTC ignorado).");
+      ultimoEstadoInformado = 0;
+    }
+
+    // MODO DIURNO: Verde vehicular permanente / Rojo peatonal
+    digitalWrite(Verde1, HIGH);
+    digitalWrite(Amarillo1, LOW);
+    digitalWrite(Rojo1, LOW);
+    digitalWrite(RojoPeaton, HIGH);
+    digitalWrite(VerdePeaton, LOW);
+
+    bool peticionDiurna = false;
+
+    for (int i = 0; i < 20; i++) {
+      if (digitalRead(buttonPin) == LOW) peticionDiurna = true;
+      delay(50);
+    }
+
+    if (peticionDiurna) {
+      Serial.println(" [EVENTO] Pulsador presionado en MODO DIURNO.");
+
+      Serial.println(" [TRANSICION] Vehicular: Verde -> Amarillo (1.5 seg)...");
+      digitalWrite(Verde1, LOW);
+      digitalWrite(Amarillo1, HIGH);
+      delay(TIEMPO_AMARILLO_TRANSICION);
+      digitalWrite(Amarillo1, LOW);
+
+      ejecutarCrucePeatonal();
+
+      Serial.println(" [PRE-AVISO] Vehicular: Amarillo previo al verde (1.5 seg)...");
+      digitalWrite(Amarillo1, HIGH);
+      delay(TIEMPO_AMARILLO_PREAVISO);
+      digitalWrite(Amarillo1, LOW);
+
+      Serial.println(" [TRANSICION] Retomando Verde Vehicular Permanente.");
+    }
+  }
+}
+
+// Secuencia comun de cruce peatonal con intervalo de seguridad "Todo en Rojo"
+void ejecutarCrucePeatonal() {
+  Serial.println(" ---> SEGURIDAD: Rojo Vehicular y Rojo Peatonal simultaneo (2 seg de despeje)...");
+  digitalWrite(Rojo1, HIGH);
+  digitalWrite(RojoPeaton, HIGH);
+  digitalWrite(VerdePeaton, LOW);
+  delay(TIEMPO_ROJO_DESPEJE);
+
+  Serial.println(" ---> CRUCE PEATONAL: Rojo Vehicular / Verde Peaton ACTIVO (4 seg)");
+  digitalWrite(RojoPeaton, LOW);
+  digitalWrite(VerdePeaton, HIGH);
+  delay(TIEMPO_CRUCE_PEATONAL);
+
+  Serial.println(" ---> FIN CRUCE PEATONAL: Rojo Vehicular y Rojo Peatonal (2 seg de despeje)...");
+  digitalWrite(VerdePeaton, LOW);
+  digitalWrite(RojoPeaton, HIGH);
+  delay(TIEMPO_ROJO_DESPEJE);
+
+  digitalWrite(Rojo1, LOW);
+}
+
+void apagarLuces() {
+  digitalWrite(Rojo1, LOW);
+  digitalWrite(Amarillo1, LOW);
+  digitalWrite(Verde1, LOW);
+  digitalWrite(RojoPeaton, LOW);
+  digitalWrite(VerdePeaton, LOW);
+}
