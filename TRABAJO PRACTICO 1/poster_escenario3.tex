@@ -1,0 +1,231 @@
+\documentclass[a3paper,portrait,fontscale=0.32]{tikzposter}
+
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta}
+
+% ---------- Paleta de colores (tono verde azulado del original) ----------
+\definecolor{posterteal}{HTML}{1B4B4F}
+\definecolor{postertealdark}{HTML}{123638}
+\definecolor{posterbg}{HTML}{F4F1EA}
+\definecolor{posterband}{HTML}{1B4B4F}
+\definecolor{posteraccentgreen}{HTML}{4E8C4A}
+\definecolor{posteraccentred}{HTML}{B23A2E}
+\definecolor{posteraccentyellow}{HTML}{D9A441}
+
+% ---------- Estilo general del póster ----------
+\usetheme{Default}
+\usecolorstyle[colorPalette=posterteal]{Default}
+
+\definecolorstyle{posterStyle}{
+  \definecolor{colorOne}{HTML}{1B4B4F}
+  \definecolor{colorTwo}{HTML}{F4F1EA}
+  \definecolor{colorThree}{HTML}{1B4B4F}
+}{
+  \colorlet{backgroundcolor}{colorTwo}
+  \colorlet{framecolor}{colorOne}
+  \colorlet{titlefgcolor}{white}
+  \colorlet{titlebgcolor}{colorOne}
+  \colorlet{blocktitlebgcolor}{colorOne}
+  \colorlet{blocktitlefgcolor}{white}
+  \colorlet{blockbodybgcolor}{white}
+  \colorlet{blockbodyfgcolor}{black}
+  \colorlet{notebgcolor}{colorTwo}
+  \colorlet{notefgcolor}{black}
+  \colorlet{notefrcolor}{colorOne}
+}
+\usecolorstyle{posterStyle}
+
+\usetitlestyle{Filled}
+\useblockstyle{Basic}
+
+\settitle{
+  \centering
+  \vspace{0.4cm}
+  \begin{minipage}{0.14\linewidth}
+    \centering
+    {\small\bfseries\color{white} UNIVERSIDAD\\NACIONAL DE\\HURLINGHAM}
+  \end{minipage}
+  \hfill
+  \begin{minipage}{0.80\linewidth}
+    \centering
+    {\Huge\bfseries\color{white} Semáforo inteligente con Arduino: cruce peatonal y modo nocturno automático}\\[0.3cm]
+    {\Large\itshape\color{white} Escenario III --- Gestión de tránsito vehicular y peatonal con detección de horario nocturno}\\[0.3cm]
+    {\large\color{white}
+      \textbf{Romina Vera · Miriam Olson} \quad
+      \textbf{Docente:} Natalia Caroli \quad
+      \textbf{Materia:} Arquitectura de Computadoras \quad
+      \textbf{Institución:} Universidad Nacional de Hurlingham, Argentina}
+  \end{minipage}
+  \vspace{0.4cm}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{columns}
+
+% ======================= COLUMNA 1 =======================
+\column{0.33}
+
+\block{Objetivos}{
+\begin{itemize}
+  \item Implementar un semáforo vehicular-peatonal que atienda el pedido de cruce sin cortar abruptamente el ciclo en curso.
+  \item Incorporar un intervalo de seguridad ``todo en rojo'' antes y después del cruce peatonal.
+  \item Detectar el modo nocturno de forma automática (LDR o RTC), sin depender solo de un interruptor manual.
+  \item Validar el diseño en simulación (Wokwi) antes del montaje físico en protoboard.
+\end{itemize}
+}
+
+\block{3. Metodología}{
+Estudio experimental aplicado, en dos etapas: simulación funcional y montaje físico verificado.
+
+\textbf{Entorno}\\
+Arduino IDE, funciones \texttt{setup()}/\texttt{loop()}, máquina de estados temporizada con \texttt{delay()}.
+
+\textbf{Circuito}\\
+5 salidas digitales (LEDs), 1 entrada digital (pulsador), 1 entrada analógica (LDR) y bus I2C (RTC).
+
+\textbf{Validación}\\
+Observación directa de la secuencia y monitoreo por Puerto Serie de luz/hora en cada transición.
+
+\vspace{0.3cm}
+\textbf{Herramientas Utilizadas}
+\begin{itemize}
+  \item \textbf{Simulación:} Wokwi
+  \item \textbf{Microcontrolador:} Arduino UNO / MEGA
+  \item \textbf{Hardware:} Protoboard, LEDs, resistencias, pulsador, LDR, RTC DS3231
+  \item \textbf{Software:} Arduino IDE, librería RTClib
+\end{itemize}
+}
+
+% ======================= COLUMNA 2 =======================
+\column{0.34}
+
+\block{1. Introducción}{
+Mantener el semáforo vehicular en verde de forma permanente, en esquinas de alto tránsito peatonal, aumenta el riesgo de cruces inseguros. Este trabajo desarrolla un sistema embebido de bajo costo que combina un pulsador de solicitud de cruce con detección automática del horario nocturno.
+}
+
+\block{2. Marco Teórico}{
+\textbf{Lógica de exclusión:} mientras el vehicular está en verde, el peatonal permanece en rojo, y viceversa.
+
+\textbf{Intervalo de seguridad:} entre cada cambio de fase se intercala un breve ``todo en rojo'' que despeja el cruce.
+
+\textbf{Entrada digital:} el pulsador usa \texttt{INPUT\_PULLUP}, sin resistencia externa.
+
+\textbf{Sensado de luz:} el LDR forma un divisor de tensión cuya salida aumenta cuando baja la luz.
+}
+
+\block{5. Conclusiones}{
+\begin{itemize}
+  \item El sistema atendió el pedido de cruce sin interrumpir de forma abrupta el ciclo vehicular en curso.
+  \item La detección automática de modo nocturno (LDR/RTC) redujo la dependencia de un interruptor manual.
+  \item El intervalo ``todo en rojo'' evitó solapamientos entre luces vehiculares y peatonales.
+  \item La simulación previa permitió calibrar tiempos y umbrales sin arriesgar componentes.
+\end{itemize}
+}
+
+% ======================= COLUMNA 3 =======================
+\column{0.33}
+
+\block{6. Referencias}{
+\footnotesize
+Arduino. (s.f.). \textit{Arduino Documentation}. docs.arduino.cc\\[0.15cm]
+Adafruit. (s.f.). \textit{RTClib Library Documentation}. github.com/adafruit/RTClib\\[0.15cm]
+Wokwi. (s.f.). \textit{Wokwi Docs}. docs.wokwi.com\\[0.15cm]
+Universidad Nacional de Hurlingham (2025). \textit{Material de clase, Arquitectura de Computadoras}.
+}
+
+\block{Contacto}{
+\small
+romina.vera@estudiantes.unahur.edu.ar\\
+miriam.olson@estudiantes.unahur.edu.ar\\
+natalia.caroli@unahur.edu.ar
+}
+
+\end{columns}
+
+% ======================= BLOQUE ANCHO INFERIOR =======================
+\block{4. Resultados Destacados --- Escenario III}{
+
+La secuencia de cruce peatonal y el intervalo de seguridad se cumplieron sin solapamientos, en simulación y en el circuito físico. La transición a modo nocturno se verificó con sensor de luz y reloj de tiempo real.
+
+\vspace{0.3cm}
+\begin{columns}
+
+  \column{0.42}
+  \textbf{Diagrama de interconexión}
+  \vspace{0.2cm}
+
+  \centering
+  \begin{tikzpicture}[
+      box/.style={draw, rounded corners, fill=posterband!10, minimum width=3.4cm, minimum height=0.8cm, font=\scriptsize, align=center},
+      mcu/.style={draw, fill=posterband, text=white, rounded corners, minimum width=2.2cm, minimum height=1.6cm, font=\bfseries\small, align=center},
+      arr/.style={-{Stealth[length=2mm]}, thick, posterband}
+    ]
+    \node[mcu] (mcu) at (0,0) {$\mu$C\\Arduino};
+
+    \node[box] (r1) at (-5,1.8) {LED Rojo Vehic.};
+    \node[box] (a1) at (-5,0.6) {LED Amarillo Vehic.};
+    \node[box] (v1) at (-5,-0.6) {LED Verde Vehic.};
+    \node[box] (pb) at (-5,-1.8) {Pulsador Peatón};
+
+    \node[box] (r2) at (5,1.8) {LED Rojo Peatón};
+    \node[box] (v2) at (5,0.6) {LED Verde Peatón};
+    \node[box] (ldr) at (5,-1.8) {LDR / RTC};
+
+    \draw[arr] (r1) -- (mcu);
+    \draw[arr] (a1) -- (mcu);
+    \draw[arr] (v1) -- (mcu);
+    \draw[arr] (pb) -- (mcu);
+    \draw[arr] (mcu) -- (r2);
+    \draw[arr] (mcu) -- (v2);
+    \draw[arr] (ldr) -- (mcu);
+  \end{tikzpicture}
+
+  \vspace{0.2cm}
+  \raggedright\footnotesize \textit{Figura 1. Diagrama de interconexión en bloque del sistema.}
+
+  \vspace{0.4cm}
+  \raggedright\normalsize
+  \textbf{Montaje físico}\\
+  \small
+  Circuito ensamblado sobre protoboard con Arduino MEGA: cinco LEDs con resistencias limitadoras, pulsador con \texttt{INPUT\_PULLUP} y LDR en entrada analógica. La detección por RTC se validó ajustando la hora por comandos en el Monitor Serie.
+
+  \column{0.55}
+  \raggedright
+  \textbf{Cronograma de fases (Escenario III)}
+  \vspace{0.2cm}
+
+  \small
+  \begin{tabular}{@{}l l l l@{}}
+    \toprule
+    \textbf{Estado} & \textbf{Vehicular} & \textbf{Peatonal} & \textbf{Duración} \\
+    \midrule
+    Ciclo normal     & \textcolor{posteraccentgreen}{\textbf{Verde}}        & \textcolor{posteraccentred}{\textbf{Rojo}} & Indefinido \\
+    Transición        & \textcolor{posteraccentyellow}{\textbf{Amarillo}}    & \textcolor{posteraccentred}{\textbf{Rojo}} & 1.5 s \\
+    Despeje            & \textcolor{posteraccentred}{\textbf{Rojo}}           & \textcolor{posteraccentred}{\textbf{Rojo}} & 2 s \\
+    Cruce peatonal      & \textcolor{posteraccentred}{\textbf{Rojo}}           & \textcolor{posteraccentgreen}{\textbf{Verde}} & 4 s \\
+    Despeje            & \textcolor{posteraccentred}{\textbf{Rojo}}           & \textcolor{posteraccentred}{\textbf{Rojo}} & 2 s \\
+    Pre-aviso           & \textcolor{posteraccentyellow}{\textbf{Amarillo}}    & \textcolor{posteraccentred}{\textbf{Rojo}} & 1.5 s \\
+    Modo nocturno       & \textcolor{posteraccentyellow}{\textbf{Amar. intermit.}} & \textcolor{posteraccentred}{\textbf{Rojo}} & 0.5 / 0.5 s \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.2cm}
+  \footnotesize \textit{Cuadro 1. Matriz de tiempos y estados de la secuencia.}
+
+\end{columns}
+}
+
+\node[above, font=\small] at (bottomleft |- current bounding box.south) {\hspace{1cm}Instituto de Tecnología e Ingeniería --- UNAHUR};
+\node[above, font=\small] at (bottomright |- current bounding box.south) {Arquitectura de Computadoras · 2026\hspace{1cm}};
+
+\end{document}
