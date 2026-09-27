@@ -1,0 +1,86 @@
+
+// =========================================================================
+// ESCENARIO V: TEMPERATURA Y HUMEDAD CON ALERTAS (SENSOR DHT22)
+// =========================================================================
+
+#include "DHT.h" // Librería obligatoria para el sensor DHT
+
+// Definición de pines digitales
+const int DHTPIN = 2;       // Pin digital conectado a la línea de datos (Data) del DHT22
+const int PIN_LED = 3;      // LED para señal luminosa de alerta
+const int PIN_BUZZER = 12;   // Buzzer piezoeléctrico para la alarma sonora
+
+// Definición del tipo de sensor
+#define DHTTYPE DHT22
+
+// Inicialización del objeto DHT
+DHT dht(DHTPIN, DHTTYPE);
+
+// Configuración de umbrales de alerta
+const float UMBRAL_TEMP = 25.0;  // Umbral de temperatura (> 25 °C)
+const float UMBRAL_HUM = 70.0;   // Umbral de humedad (70% RH)
+
+void setup() {
+  // Inicialización de la comunicación serial a 9600 baudios
+  Serial.begin(9600);
+  Serial.println("==========================================");
+  Serial.println("   MONITOR DE TEMPERATURA Y HUMEDAD DHT22  ");
+  Serial.println("==========================================");
+
+  // Configuración de pines de salida
+  pinMode(PIN_LED, OUTPUT);
+  pinMode(PIN_BUZZER, OUTPUT);
+
+  // Estado inicial apagado
+  digitalWrite(PIN_LED, LOW);
+  noTone(PIN_BUZZER);
+
+  // Inicialización del sensor DHT22
+  dht.begin();
+}
+
+void loop() {
+  // El tiempo entre lecturas debe ser de al menos 2 segundos para el DHT22
+  delay(2000);
+
+  // Lectura de valores analógicos/digitales procesados por la librería
+  float humedad = dht.readHumidity();
+  float temperatura = dht.readTemperature();
+
+  // Verificación de errores en la lectura
+  if (isnan(humedad) || isnan(temperatura)) {
+    Serial.println("[ERROR] Fallo al leer la información del sensor DHT22.");
+    return;
+  }
+
+  // Reporte en el Monitor Serie
+  Serial.print("Humedad: ");
+  Serial.print(humedad);
+  Serial.print(" %  |  Temperatura: ");
+  Serial.print(temperatura);
+  Serial.println(" °C");
+
+  // Evaluación de condiciones de alerta
+  bool alertaTemperatura = (temperatura > UMBRAL_TEMP);
+  bool alertaHumedad = (humedad > UMBRAL_HUM);
+
+  if (alertaTemperatura || alertaHumedad) {
+    // Enciende el LED indicador ante cualquiera de las dos alertas
+    digitalWrite(PIN_LED, HIGH);
+
+    if (alertaTemperatura && alertaHumedad) {
+      Serial.println(" [ALERTA MAXIMA] ¡Se superaron los 25 °C Y el limite de humedad!");
+      tone(PIN_BUZZER, 1000); // Tono de alta frecuencia (1000 Hz)
+    } else if (alertaTemperatura) {
+      Serial.println(" [ALERTA TEMPERATURA] ¡Temperatura superior a 25 °C!");
+      tone(PIN_BUZZER, 800);  // Tono de alerta de temperatura (800 Hz)
+    } else {
+      Serial.println(" [ALERTA HUMEDAD] ¡Humedad superior al umbral establecido!");
+      tone(PIN_BUZZER, 600);  // Tono de alerta de humedad (600 Hz)
+    }
+  } else {
+    // Si los valores son normales, se desactivan las alertas
+    digitalWrite(PIN_LED, LOW);
+    noTone(PIN_BUZZER);
+  }
+}
